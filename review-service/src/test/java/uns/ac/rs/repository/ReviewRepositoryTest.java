@@ -33,7 +33,8 @@ public class ReviewRepositoryTest {
                 UUID.randomUUID(),
                 Review.ReviewType.HOST,
                 "reviewerUsername",
-                "targetId",
+                "hostUsername",
+                5L,
                 5
         );
 
@@ -59,10 +60,14 @@ public class ReviewRepositoryTest {
         Review review = new Review();
         review.setId(UUID.randomUUID());
         review.setTargetType(Review.ReviewType.HOST);
-        review.setTargetId("targetId");
+        review.setReviewerUsername("reviewerUsername");
+        review.setHostUsername("hostUsername");
+        review.setAccommodationId(5L);
+        review.setStars(5);
+
         reviewRepository.persist(review);
 
-        List<Review> reviews = reviewRepository.findByTarget(Review.ReviewType.HOST, "targetId");
+        List<Review> reviews = reviewRepository.findByHost(Review.ReviewType.HOST, "hostUsername");
         assertNotNull(reviews);
         assertEquals(1, reviews.size());
         assertEquals(review, reviews.get(0));

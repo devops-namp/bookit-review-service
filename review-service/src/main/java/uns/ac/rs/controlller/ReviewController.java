@@ -1,9 +1,12 @@
 package uns.ac.rs.controlller;
 
+import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
+import uns.ac.rs.controlller.dto.ReviewDTO;
 import uns.ac.rs.entity.Review;
 import uns.ac.rs.service.ReviewService;
 import jakarta.ws.rs.core.Response;
@@ -11,6 +14,7 @@ import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import jakarta.ws.rs.core.MediaType;
 
@@ -26,8 +30,13 @@ import io.vertx.core.json.JsonObject;
 @Consumes(MediaType.APPLICATION_JSON)
 public class ReviewController {
 
+    private static final Logger LOG = Logger.getLogger(String.valueOf(ReviewController.class));
+
     @Inject
     ReviewService ReviewService;
+
+    @Inject
+    SecurityIdentity identity;
 
     @Inject
     @Channel("filter-request-queue")
@@ -37,8 +46,7 @@ public class ReviewController {
     @GET
     @PermitAll
     public List<Review> getAll() {
-        System.out.println("Dobavi mi sve korisnike");
-        stringEmitter.send("dobavi");
+        LOG.info("Getting all reviews");
         return ReviewService.getAll();
     }
 
@@ -52,40 +60,44 @@ public class ReviewController {
     @Path("/{id}")
     @PermitAll
     public Response getById(@PathParam("id") UUID id) {
+        LOG.info("Getting review by id: " + id);
         Optional<Review> Review = ReviewService.getById(id);
+        LOG.info("Review: " + Review);
         return Review.map(value -> Response.ok(value).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
 
-    // get review by target id and type
     @GET
     @Path("/target/{targetType}/{targetId}")
     @PermitAll
     public List<Review> getByTarget(@PathParam("targetType") Review.ReviewType targetType, @PathParam("targetId") String targetId) {
+        LOG.info("Getting review by target: " + targetType + " " + targetId);
         return ReviewService.getByTarget(targetType, targetId);
     }
 
 
     @POST
     @RolesAllowed({"GUEST"})
-    public Response addReview(Review Review) {
+    public Response addReview(@Valid ReviewDTO ReviewDTO) {
+        LOG.info("Adding new review");
+        Review Review = new Review(ReviewDTO);
+        Review.setId(UUID.randomUUID());
+        Review.setReviewerUsername(identity.getPrincipal().getName());
+        LOG.info("Review: " + Review);
         ReviewService.addReview(Review);
+        LOG.info("Review added");
         return Response.status(Response.Status.CREATED).entity(Review).build();
     }
 
-    @PUT
-    @Path("/{id}")
-    @RolesAllowed({ "GUEST" })
-    public Response updateReview(@PathParam("id") UUID id, Review Review) {
-        ReviewService.updateReview(id, Review);
-        return Response.ok(Review).build();
-    }
 
     @DELETE
     @Path("/{id}")
     @RolesAllowed({ "GUEST" })
     public Response deleteReview(@PathParam("id") UUID id) {
-        ReviewService.deleteReview(id);
+        String username = identity.getPrincipal().getName();
+        LOG.info("Deleting review by id: " + id + " and username: " + username);
+        ReviewService.deleteReview(id, username);
+        LOG.info("Review deleted");
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 

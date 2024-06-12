@@ -3,6 +3,7 @@ package uns.ac.rs.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import uns.ac.rs.controlller.exception.CantLeaveReview;
 import uns.ac.rs.controlller.exception.ReviewNotFoundException;
 import uns.ac.rs.entity.ReservationEvent;
 import uns.ac.rs.entity.Review;
@@ -11,9 +12,12 @@ import uns.ac.rs.repository.ReservationEventRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class ReviewService {
+
+    private static final Logger LOG = Logger.getLogger(String.valueOf(ReviewService.class));
 
     @Inject
     ReviewRepository ReviewRepository;
@@ -30,8 +34,21 @@ public class ReviewService {
         return ReviewRepository.findByIdOptional(id);
     }
 
-    public void addReview(Review Review) {
-        ReviewRepository.persist(Review);
+    public void addReview(Review review) {
+        LOG.info("Adding review: " + review);
+        if (!canLeaveReview(review.getReviewerUsername(), review.getHostUsername())) {
+            LOG.warning("User " + review.getReviewerUsername() + " can't leave review for " + review.getHostUsername());
+            throw new CantLeaveReview();
+        }
+
+        if (ReviewRepository.findByIdOptional(review.getId()).isPresent()) {
+            LOG.info("Updating review: " + review);
+            updateReview(review.getId(), review);
+        } else {
+            LOG.info("Saving review: " + review);
+            ReviewRepository.persist(review);
+        }
+        LOG.info("Review saved");
     }
 
     public void updateReview(UUID id, Review updatedReview) {
@@ -43,14 +60,21 @@ public class ReviewService {
     }
 
 
-    public void deleteReview(UUID id) {
+    public void deleteReview(UUID id, String username) {
+        if (!ReviewRepository.findByIdOptional(id).map(review -> review.getReviewerUsername().equals(username)).orElse(false)) {
+            throw new ReviewNotFoundException();
+        }
         ReviewRepository.delete(
                 ReviewRepository.findByIdOptional(id).orElseThrow(ReviewNotFoundException::new)
         );
     }
 
     public List<Review> getByTarget(Review.ReviewType targetType, String targetId) {
-        return ReviewRepository.findByTarget(targetType, targetId);
+        if (targetType == Review.ReviewType.HOST) {
+            return ReviewRepository.findByHost(targetType, targetId);
+        } else {
+            return ReviewRepository.findByAccommodation(targetType, Long.parseLong(targetId));
+        }
     }
 
     public void saveReservationEvent(ReservationEvent reservationEvent) {
@@ -62,6 +86,9 @@ public class ReviewService {
     }
 
     public boolean canLeaveReview(String guestUsername, String hostUsername) {
+        if (guestUsername == null || guestUsername.isBlank() || hostUsername == null || hostUsername.isBlank()) {
+            return false;
+        }
         return ReservationEventRepository.canLeaveReview(guestUsername, hostUsername);
     }
 

@@ -63,6 +63,11 @@ public class ReviewServiceTest {
     @Transactional
     public void testAddReview() {
         Review review = new Review();
+        review.setReviewerUsername("reviewer");
+        review.setHostUsername("host");
+        review.setStars(5);
+        review.setTargetType(Review.ReviewType.HOST);
+        when(reservationEventRepository.canLeaveReview("reviewer", "host")).thenReturn(true);
         reviewService.addReview(review);
         verify(reviewRepository).persist(review);
     }
@@ -87,10 +92,11 @@ public class ReviewServiceTest {
     public void testDeleteReview() {
         UUID id = UUID.randomUUID();
         Review review = new Review();
+        review.setReviewerUsername("username");
 
         when(reviewRepository.findByIdOptional(id)).thenReturn(Optional.of(review));
 
-        reviewService.deleteReview(id);
+        reviewService.deleteReview(id, "username");
         verify(reviewRepository).delete(review);
     }
 
@@ -99,12 +105,12 @@ public class ReviewServiceTest {
         Review.ReviewType targetType = Review.ReviewType.HOST;
         String targetId = "targetId";
 
-        when(reviewRepository.findByTarget(targetType, targetId)).thenReturn(List.of(new Review()));
+        when(reviewRepository.findByHost(targetType, targetId)).thenReturn(List.of(new Review()));
 
         List<Review> reviews = reviewService.getByTarget(targetType, targetId);
         assertNotNull(reviews);
         assertEquals(1, reviews.size());
-        verify(reviewRepository).findByTarget(targetType, targetId);
+        verify(reviewRepository).findByHost(targetType, targetId);
     }
 
     @Test

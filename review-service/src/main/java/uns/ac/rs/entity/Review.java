@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.bson.codecs.pojo.annotations.BsonId;
+import uns.ac.rs.controlller.dto.ReviewDTO;
 
 import java.util.UUID;
 
@@ -18,12 +19,20 @@ import java.util.UUID;
 public class Review extends PanacheMongoEntityBase {
 
     @BsonId
-    public UUID id;
+    private UUID id;
 
-    public ReviewType targetType;
-    public String reviewerUsername;
-    public String targetId;
-    public int stars;
+    private ReviewType targetType;
+    private String reviewerUsername;
+    private String hostUsername;
+    private Long accommodationId;
+    private int stars;
+
+    public Review(ReviewDTO reviewDTO) {
+        this.targetType = reviewDTO.getTargetType();
+        this.hostUsername = reviewDTO.getHostUsername();
+        this.accommodationId = reviewDTO.getAccommodationId();
+        this.stars = reviewDTO.getStars();
+    }
 
     public enum ReviewType {
         HOST, ACCOMMODATION

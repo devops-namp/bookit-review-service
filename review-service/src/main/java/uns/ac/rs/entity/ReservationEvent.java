@@ -16,13 +16,13 @@ import java.time.LocalDate;
 @MongoEntity(collection="reservation-events")
 public class ReservationEvent extends PanacheMongoEntityBase {
     @BsonId
-    public String id;
-    public Long accommodationId;
-    public String hostUsername;
-    public String reservationId;
-    public String guestUsername;
-    public String eventType;
-    public LocalDate eventDate;
+    private String id;
+    private Long accommodationId;
+    private String hostUsername;
+    private String reservationId;
+    private String guestUsername;
+    private String eventType;
+    private LocalDate eventDate;
 
     public enum EventType {
         CANCELLED, CREATED
