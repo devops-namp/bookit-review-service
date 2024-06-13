@@ -11,6 +11,7 @@ import uns.ac.rs.entity.Review;
 import uns.ac.rs.service.ReviewService;
 import jakarta.ws.rs.core.Response;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -81,6 +82,7 @@ public class ReviewController {
     public Response addReview(@Valid ReviewDTO ReviewDTO) {
         LOG.info("Adding new review");
         Review Review = new Review(ReviewDTO);
+        Review.setReviewDate(LocalDate.now());
         Review.setId(UUID.randomUUID());
         Review.setReviewerUsername(identity.getPrincipal().getName());
         LOG.info("Review: " + Review);
