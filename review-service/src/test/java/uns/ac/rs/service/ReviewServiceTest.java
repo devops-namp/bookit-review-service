@@ -67,7 +67,7 @@ public class ReviewServiceTest {
         review.setHostUsername("host");
         review.setStars(5);
         review.setTargetType(Review.ReviewType.HOST);
-        when(reservationEventRepository.canLeaveReview("reviewer", "host")).thenReturn(true);
+        when(reservationEventRepository.canLeaveReviewOnHost("reviewer", "host")).thenReturn(true);
         reviewService.addReview(review);
         verify(reviewRepository).persist(review);
     }
@@ -139,10 +139,10 @@ public class ReviewServiceTest {
         String guestUsername = "guest";
         String hostUsername = "host";
 
-        when(reservationEventRepository.canLeaveReview(guestUsername, hostUsername)).thenReturn(true);
+        when(reservationEventRepository.canLeaveReviewOnHost(guestUsername, hostUsername)).thenReturn(true);
 
-        boolean result = reviewService.canLeaveReview(guestUsername, hostUsername);
+        boolean result = reviewService.canLeaveReviewOnHost(guestUsername, hostUsername);
         assertTrue(result);
-        verify(reservationEventRepository).canLeaveReview(guestUsername, hostUsername);
+        verify(reservationEventRepository).canLeaveReviewOnHost(guestUsername, hostUsername);
     }
 }
