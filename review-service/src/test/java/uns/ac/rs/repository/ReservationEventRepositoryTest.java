@@ -48,34 +48,34 @@ public class ReservationEventRepositoryTest {
 
     @Test
     @Transactional
-    public void testCanLeaveReview() {
+    public void testCanLeaveReviewOnHost() {
         ReservationEvent reservationEvent = new ReservationEvent();
         reservationEvent.setGuestUsername("guest");
         reservationEvent.setHostUsername("host");
         reservationEvent.setEventDate(LocalDate.now().minusDays(1));
         reservationEventRepository.persist(reservationEvent);
 
-        boolean canLeaveReview = reservationEventRepository.canLeaveReview("guest", "host");
+        boolean canLeaveReview = reservationEventRepository.canLeaveReviewOnHost("guest", "host");
         assertTrue(canLeaveReview);
     }
 
     @Test
     @Transactional
-    public void testCanLeaveReviewCant() {
+    public void testCanLeaveReviewOnHostCant() {
         ReservationEvent reservationEvent = new ReservationEvent();
         reservationEvent.setGuestUsername("guest");
         reservationEvent.setHostUsername("host");
         reservationEvent.setEventDate(LocalDate.now().plusDays(1));
         reservationEventRepository.persist(reservationEvent);
 
-        boolean canLeaveReview = reservationEventRepository.canLeaveReview("guest", "host");
+        boolean canLeaveReview = reservationEventRepository.canLeaveReviewOnHost("guest", "host");
         assertFalse(canLeaveReview);
     }
 
     @Test
     @Transactional
-    public void testCanLeaveReviewNoEvent() {
-        boolean canLeaveReview = reservationEventRepository.canLeaveReview("guest", "host");
+    public void testCanLeaveReviewOnHostNoEvent() {
+        boolean canLeaveReview = reservationEventRepository.canLeaveReviewOnHost("guest", "host");
         assertFalse(canLeaveReview);
     }
 

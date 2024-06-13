@@ -2,7 +2,6 @@ package uns.ac.rs.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 import uns.ac.rs.controlller.exception.CantLeaveReview;
 import uns.ac.rs.controlller.exception.ReviewNotFoundException;
 import uns.ac.rs.entity.ReservationEvent;
@@ -36,9 +35,16 @@ public class ReviewService {
 
     public void addReview(Review review) {
         LOG.info("Adding review: " + review);
-        if (!canLeaveReview(review.getReviewerUsername(), review.getHostUsername())) {
-            LOG.warning("User " + review.getReviewerUsername() + " can't leave review for " + review.getHostUsername());
-            throw new CantLeaveReview();
+        if (review.getTargetType().equals(Review.ReviewType.HOST)) {
+            if (!canLeaveReviewOnHost(review.getReviewerUsername(), review.getHostUsername())) {
+                LOG.warning("User " + review.getReviewerUsername() + " can't leave review for " + review.getHostUsername());
+                throw new CantLeaveReview();
+            }
+        } else {
+            if (!canLeaveReviewOnAccommodation(review.getReviewerUsername(), review.getAccommodationId())) {
+                LOG.warning("User " + review.getReviewerUsername() + " can't leave review for accommodation " + review.getAccommodationId());
+                throw new CantLeaveReview();
+            }
         }
 
         if (ReviewRepository.findByIdOptional(review.getId()).isPresent()) {
@@ -85,11 +91,18 @@ public class ReviewService {
         ReservationEventRepository.findByIdOptional(reservationId).ifPresent(ReservationEventRepository::delete);
     }
 
-    public boolean canLeaveReview(String guestUsername, String hostUsername) {
+    public boolean canLeaveReviewOnHost(String guestUsername, String hostUsername) {
         if (guestUsername == null || guestUsername.isBlank() || hostUsername == null || hostUsername.isBlank()) {
             return false;
         }
-        return ReservationEventRepository.canLeaveReview(guestUsername, hostUsername);
+        return ReservationEventRepository.canLeaveReviewOnHost(guestUsername, hostUsername);
+    }
+
+    public boolean canLeaveReviewOnAccommodation(String guestUsername, Long accommodationId) {
+        if (guestUsername == null || guestUsername.isBlank() || accommodationId == null) {
+            return false;
+        }
+        return ReservationEventRepository.canLeaveReviewOnAccommodation(guestUsername, accommodationId);
     }
 
 }
