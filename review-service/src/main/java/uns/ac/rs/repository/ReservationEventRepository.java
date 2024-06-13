@@ -23,7 +23,11 @@ public class ReservationEventRepository implements PanacheMongoRepository<Reserv
         return find("reservationId", reservationId).firstResult();
     }
 
-    public boolean canLeaveReview(String guestUsername, String hostUsername) {
+    public boolean canLeaveReviewOnHost(String guestUsername, String hostUsername) {
         return count("guestUsername = ?1 and hostUsername = ?2 and eventDate < ?3", guestUsername, hostUsername, LocalDate.now()) > 0;
+    }
+
+    public boolean canLeaveReviewOnAccommodation(String guestUsername, Long accommodationId) {
+        return count("guestUsername = ?1 and accommodationId = ?2 and eventDate < ?3", guestUsername, accommodationId, LocalDate.now()) > 0;
     }
 }

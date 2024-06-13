@@ -71,7 +71,7 @@ public class ReviewController {
     @Path("/target/{targetType}/{targetId}")
     @PermitAll
     public List<Review> getByTarget(@PathParam("targetType") Review.ReviewType targetType, @PathParam("targetId") String targetId) {
-        LOG.info("Getting review by target: " + targetType + " " + targetId);
+        LOG.info("Getting reviews by target: " + targetType + " " + targetId);
         return ReviewService.getByTarget(targetType, targetId);
     }
 
