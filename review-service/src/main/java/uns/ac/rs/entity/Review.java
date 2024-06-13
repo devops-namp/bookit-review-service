@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import org.bson.codecs.pojo.annotations.BsonId;
 import uns.ac.rs.controlller.dto.ReviewDTO;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
@@ -26,6 +27,7 @@ public class Review extends PanacheMongoEntityBase {
     private String hostUsername;
     private Long accommodationId;
     private int stars;
+    private LocalDate reviewDate;
 
     public Review(ReviewDTO reviewDTO) {
         this.targetType = reviewDTO.getTargetType();

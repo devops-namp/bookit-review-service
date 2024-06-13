@@ -6,6 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import uns.ac.rs.entity.ReservationEvent;
+import uns.ac.rs.entity.Review;
 import uns.ac.rs.repository.ReservationEventRepository;
 import uns.ac.rs.repository.ReviewRepository;
 
@@ -21,6 +22,9 @@ public class AppLifecycleBean {
     @Inject
     ReservationEventRepository reservationEventRepository;
 
+    @Inject
+    ReviewRepository reviewRepository;
+
     void onStart(@Observes StartupEvent ev) {
         LOGGER.info("The application is starting...");
         ReservationEvent reservationEvent = new ReservationEvent();
@@ -32,6 +36,17 @@ public class AppLifecycleBean {
         reservationEvent.setEventType(ReservationEvent.EventType.CREATED.name());
         reservationEvent.setEventDate(LocalDate.now().minusWeeks(1));
         reservationEventRepository.persist(reservationEvent);
+
+        Review review = new Review();
+        review.setReviewDate(LocalDate.now());
+        review.setId(UUID.randomUUID());
+        review.setTargetType(Review.ReviewType.HOST);
+        review.setHostUsername("username2");
+        review.setReviewerUsername("username1");
+        review.setAccommodationId(1L);
+        review.setStars(5);
+        reviewRepository.persist(review);
+
     }
 
     void onStop(@Observes ShutdownEvent ev) {

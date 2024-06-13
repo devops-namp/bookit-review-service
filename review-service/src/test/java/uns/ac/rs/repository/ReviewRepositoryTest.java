@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import uns.ac.rs.entity.Review;
 import uns.ac.rs.resources.MongoDBResource;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,7 +36,8 @@ public class ReviewRepositoryTest {
                 "reviewerUsername",
                 "hostUsername",
                 5L,
-                5
+                5,
+                LocalDate.now()
         );
 
         reviewRepository.persist(review);
