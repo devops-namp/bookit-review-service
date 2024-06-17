@@ -34,7 +34,21 @@ public class ReviewService {
     }
 
     public void addReview(Review review) {
+        validateReviewPermission(review);
+
+        if (ReviewRepository.findByIdOptional(review.getId()).isPresent()) {
+            LOG.info("Updating review: " + review);
+            updateReview(review.getId(), review);
+        } else {
+            LOG.info("Saving review: " + review);
+            ReviewRepository.persist(review);
+        }
+        LOG.info("Review saved");
+    }
+
+    private void validateReviewPermission(Review review) {
         LOG.info("Adding review: " + review);
+
         if (review.getTargetType().equals(Review.ReviewType.HOST)) {
             if (!canLeaveReviewOnHost(review.getReviewerUsername(), review.getHostUsername())) {
                 LOG.warning("User " + review.getReviewerUsername() + " can't leave review for " + review.getHostUsername());
@@ -46,16 +60,8 @@ public class ReviewService {
                 throw new CantLeaveReview();
             }
         }
-
-        if (ReviewRepository.findByIdOptional(review.getId()).isPresent()) {
-            LOG.info("Updating review: " + review);
-            updateReview(review.getId(), review);
-        } else {
-            LOG.info("Saving review: " + review);
-            ReviewRepository.persist(review);
-        }
-        LOG.info("Review saved");
     }
+
 
     public void updateReview(UUID id, Review updatedReview) {
         Review existingReview = ReviewRepository.findByIdOptional(id)
