@@ -6,6 +6,7 @@ import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.MockitoAnnotations;
+import uns.ac.rs.controlller.exception.CantLeaveReview;
 import uns.ac.rs.entity.ReservationEvent;
 import uns.ac.rs.entity.Review;
 import uns.ac.rs.repository.ReservationEventRepository;
@@ -71,6 +72,65 @@ public class ReviewServiceTest {
         reviewService.addReview(review);
         verify(reviewRepository).persist(review);
     }
+
+
+    @Test
+    @Transactional
+    public void testAddReviewWithPermissionDenied() {
+        Review review = new Review();
+        review.setReviewerUsername("user1");
+        review.setHostUsername("host1");
+        review.setTargetType(Review.ReviewType.HOST);
+        when(reservationEventRepository.canLeaveReviewOnHost("user1", "host1")).thenReturn(false);
+
+        assertThrows(CantLeaveReview.class, () -> reviewService.addReview(review));
+        verify(reviewRepository, never()).persist(any(Review.class));
+    }
+
+    @Test
+    @Transactional
+    public void testAddReviewWithUpdatingExistingReview() {
+        UUID id = UUID.randomUUID();
+        Review review = new Review();
+        review.setId(id);
+        review.setReviewerUsername("user2");
+        review.setHostUsername("host2");
+        review.setTargetType(Review.ReviewType.HOST);
+        when(reviewRepository.findByIdOptional(id)).thenReturn(Optional.of(new Review()));
+        when(reservationEventRepository.canLeaveReviewOnHost("user2", "host2")).thenReturn(true);
+
+        reviewService.addReview(review);
+        verify(reviewRepository).update(any(Review.class));
+    }
+
+    @Test
+    @Transactional
+    public void testAddReviewWithSavingNewReview() {
+        Review review = new Review();
+        review.setId(UUID.randomUUID());
+        review.setReviewerUsername("user3");
+        review.setHostUsername("host3");
+        review.setTargetType(Review.ReviewType.HOST);
+        when(reviewRepository.findByIdOptional(review.getId())).thenReturn(Optional.empty());
+        when(reservationEventRepository.canLeaveReviewOnHost("user3", "host3")).thenReturn(true);
+
+        reviewService.addReview(review);
+        verify(reviewRepository).persist(review);
+    }
+
+    @Test
+    @Transactional
+    public void testAddReviewForAccommodationWithPermissionDenied() {
+        Review review = new Review();
+        review.setReviewerUsername("user4");
+        review.setAccommodationId(1L);
+        review.setTargetType(Review.ReviewType.ACCOMMODATION);
+        when(reservationEventRepository.canLeaveReviewOnAccommodation("user4", 1L)).thenReturn(false);
+
+        assertThrows(CantLeaveReview.class, () -> reviewService.addReview(review));
+        verify(reviewRepository, never()).persist(any(Review.class));
+    }
+
 
     @Test
     @Transactional
