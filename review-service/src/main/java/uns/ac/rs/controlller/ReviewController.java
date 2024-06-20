@@ -103,6 +103,11 @@ public class ReviewController {
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 
+    @GET
+    @Path("/health")
+    @PermitAll
+    public Response health() {
+        return Response.ok().build();
+    }
 
-    
 }
