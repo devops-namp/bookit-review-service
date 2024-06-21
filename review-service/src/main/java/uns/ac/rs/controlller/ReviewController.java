@@ -83,12 +83,11 @@ public class ReviewController {
         LOG.info("Adding new review");
         Review Review = new Review(ReviewDTO);
         Review.setReviewDate(LocalDate.now());
-        Review.setId(UUID.randomUUID());
         Review.setReviewerUsername(identity.getPrincipal().getName());
         LOG.info("Review: " + Review);
-        ReviewService.addReview(Review);
+        Review addedReview = ReviewService.addReview(Review);
         LOG.info("Review added");
-        return Response.status(Response.Status.CREATED).entity(Review).build();
+        return Response.status(Response.Status.CREATED).entity(addedReview).build();
     }
 
 

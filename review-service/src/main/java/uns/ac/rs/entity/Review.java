@@ -34,6 +34,11 @@ public class Review extends PanacheMongoEntityBase {
         this.hostUsername = reviewDTO.getHostUsername();
         this.accommodationId = reviewDTO.getAccommodationId();
         this.stars = reviewDTO.getStars();
+        if (reviewDTO.getId() != null) {
+            this.id = UUID.fromString(reviewDTO.getId());
+        } else {
+            this.id = UUID.randomUUID();
+        }
     }
 
     public enum ReviewType {
