@@ -2,10 +2,14 @@ package uns.ac.rs.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
 import uns.ac.rs.controlller.exception.CantLeaveReview;
 import uns.ac.rs.controlller.exception.ReviewNotFoundException;
 import uns.ac.rs.entity.ReservationEvent;
 import uns.ac.rs.entity.Review;
+import uns.ac.rs.event.NotificationEvent;
+import uns.ac.rs.event.NotificationType;
 import uns.ac.rs.repository.ReviewRepository;
 import uns.ac.rs.repository.ReservationEventRepository;
 import java.util.List;
@@ -15,6 +19,10 @@ import java.util.logging.Logger;
 
 @ApplicationScoped
 public class ReviewService {
+
+    @Inject
+    @Channel("notification-queue")
+    Emitter<NotificationEvent> eventEmitter;
 
     private static final Logger LOG = Logger.getLogger(String.valueOf(ReviewService.class));
 
@@ -33,9 +41,7 @@ public class ReviewService {
         return ReviewRepository.findByIdOptional(id);
     }
 
-    public void addReview(Review review) {
-        validateReviewPermission(review);
-
+    public Review addReview(Review review) {
         if (ReviewRepository.findByIdOptional(review.getId()).isPresent()) {
             LOG.info("Updating review: " + review);
             updateReview(review.getId(), review);
@@ -44,23 +50,12 @@ public class ReviewService {
             ReviewRepository.persist(review);
         }
         LOG.info("Review saved");
+        NotificationType notificationType = review.getTargetType().equals(Review.ReviewType.HOST) ? NotificationType.PERSONAL_REVIEW : NotificationType.ACCOMMODATION_REVIEW;
+        NotificationEvent notificationEvent = new NotificationEvent("You have a new review!", review.getHostUsername(), notificationType);
+        eventEmitter.send(notificationEvent);
+        return review;
     }
 
-    private void validateReviewPermission(Review review) {
-        LOG.info("Adding review: " + review);
-
-        if (review.getTargetType().equals(Review.ReviewType.HOST)) {
-            if (!canLeaveReviewOnHost(review.getReviewerUsername(), review.getHostUsername())) {
-                LOG.warning("User " + review.getReviewerUsername() + " can't leave review for " + review.getHostUsername());
-                throw new CantLeaveReview();
-            }
-        } else {
-            if (!canLeaveReviewOnAccommodation(review.getReviewerUsername(), review.getAccommodationId())) {
-                LOG.warning("User " + review.getReviewerUsername() + " can't leave review for accommodation " + review.getAccommodationId());
-                throw new CantLeaveReview();
-            }
-        }
-    }
 
 
     public void updateReview(UUID id, Review updatedReview) {
@@ -102,13 +97,6 @@ public class ReviewService {
             return false;
         }
         return ReservationEventRepository.canLeaveReviewOnHost(guestUsername, hostUsername);
-    }
-
-    public boolean canLeaveReviewOnAccommodation(String guestUsername, Long accommodationId) {
-        if (guestUsername == null || guestUsername.isBlank() || accommodationId == null) {
-            return false;
-        }
-        return ReservationEventRepository.canLeaveReviewOnAccommodation(guestUsername, accommodationId);
     }
 
 }
