@@ -19,4 +19,5 @@ public class ReviewDTO {
     public Long accommodationId;
     @NotNull
     private int stars;
+    private String id;
 }

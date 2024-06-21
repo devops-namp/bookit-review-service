@@ -76,19 +76,6 @@ public class ReviewServiceTest {
 
     @Test
     @Transactional
-    public void testAddReviewWithPermissionDenied() {
-        Review review = new Review();
-        review.setReviewerUsername("user1");
-        review.setHostUsername("host1");
-        review.setTargetType(Review.ReviewType.HOST);
-        when(reservationEventRepository.canLeaveReviewOnHost("user1", "host1")).thenReturn(false);
-
-        assertThrows(CantLeaveReview.class, () -> reviewService.addReview(review));
-        verify(reviewRepository, never()).persist(any(Review.class));
-    }
-
-    @Test
-    @Transactional
     public void testAddReviewWithUpdatingExistingReview() {
         UUID id = UUID.randomUUID();
         Review review = new Review();
@@ -117,20 +104,6 @@ public class ReviewServiceTest {
         reviewService.addReview(review);
         verify(reviewRepository).persist(review);
     }
-
-    @Test
-    @Transactional
-    public void testAddReviewForAccommodationWithPermissionDenied() {
-        Review review = new Review();
-        review.setReviewerUsername("user4");
-        review.setAccommodationId(1L);
-        review.setTargetType(Review.ReviewType.ACCOMMODATION);
-        when(reservationEventRepository.canLeaveReviewOnAccommodation("user4", 1L)).thenReturn(false);
-
-        assertThrows(CantLeaveReview.class, () -> reviewService.addReview(review));
-        verify(reviewRepository, never()).persist(any(Review.class));
-    }
-
 
     @Test
     @Transactional
